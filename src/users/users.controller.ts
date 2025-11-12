@@ -1,42 +1,28 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  @MessagePattern({ cmd: 'create_user' })
+  create(@Payload() createUserDto: CreateUserDto) {
+    console.log('📩 Mensaje recibido para crear usuario:', createUserDto.email);
     return this.usersService.create(createUserDto);
   }
 
-  @Get()
+  @MessagePattern({ cmd: 'get_all_users' })
   findAll() {
+    console.log('📩 Mensaje recibido para obtener todos los usuarios');
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @MessagePattern({ cmd: 'find_user_by_id' })
+  findOne(@Payload() id: string) {
+    console.log('📩 Mensaje recibido para obtener usuario con ID:', id);
     return this.usersService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
   }
 }

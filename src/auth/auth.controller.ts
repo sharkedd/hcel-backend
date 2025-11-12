@@ -1,14 +1,15 @@
-// src/auth/auth.controller.ts
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login-dto';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    const user = await this.authService.validateUser(body.email, body.password);
+  @MessagePattern({ cmd: 'login_user' })
+  async login(@Payload() loginDto: LoginDto) {
+    const user = await this.authService.validateUser(loginDto);
     return this.authService.login(user);
   }
 }

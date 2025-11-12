@@ -12,12 +12,9 @@ import { AuthModule } from './auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true, // Hace que las variables estén disponibles en toda la app
     }),
-
     // Conexión a MongoDB usando la variable de entorno
     MongooseModule.forRoot(process.env.MONGODB_URI!),
-
     UsersModule,
-
     AuthModule,
   ],
   controllers: [AppController],

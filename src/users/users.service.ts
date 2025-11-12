@@ -1,14 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
+import { User } from './schemas/user.schema';
+import { RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './schemas/user.schema';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +18,10 @@ export class UsersService {
       .exec();
 
     if (existingUser) {
-      throw new BadRequestException('El usuario con este email ya existe');
+      throw new RpcException({
+        status: 409,
+        message: 'El usuario con este correo ya existe',
+      });
     }
 
     // 🔐 Encriptar la contraseña antes de guardar
@@ -48,12 +48,22 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.userModel.find().exec();
+    const users = this.userModel.find().exec();
+    if (!users)
+      throw new RpcException({
+        status: 404,
+        message: '❌Usuarios no encontrados',
+      });
+    return users;
   }
 
   async findOne(id: string) {
     const user = await this.userModel.findById(id).exec();
-    if (!user) throw new NotFoundException('User not found');
+    if (!user)
+      throw new RpcException({
+        status: 404,
+        message: '❌Usuario no encontrado',
+      });
     return user;
   }
 
@@ -61,13 +71,21 @@ export class UsersService {
     const updated = await this.userModel
       .findByIdAndUpdate(id, updateUserDto, { new: true })
       .exec();
-    if (!updated) throw new NotFoundException('User not found');
+    if (!updated)
+      throw new RpcException({
+        status: 404,
+        message: '❌Usuario no encontrado',
+      });
     return updated;
   }
 
   async remove(id: string) {
     const deleted = await this.userModel.findByIdAndDelete(id).exec();
-    if (!deleted) throw new NotFoundException('User not found');
+    if (!deleted)
+      throw new RpcException({
+        status: 404,
+        message: '❌Usuario no encontrado',
+      });
     return deleted;
   }
 }
