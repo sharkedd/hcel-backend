@@ -12,4 +12,10 @@ export class AuthController {
     const user = await this.authService.validateUser(loginDto);
     return this.authService.login(user);
   }
+
+  @MessagePattern({ cmd: 'validate_token' })
+  async validateToken(@Payload() token: string) {
+    console.log('🛡️ Validando token recibido:', token);
+    return this.authService.validateToken(token);
+  }
 }
