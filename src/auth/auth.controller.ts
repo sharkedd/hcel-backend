@@ -18,4 +18,9 @@ export class AuthController {
     console.log('🛡️ Validando token recibido:', token);
     return this.authService.validateToken(token);
   }
+
+  @MessagePattern({ cmd: 'refresh_token' })
+  async refreshToken(@Payload() token: string) {
+    return this.authService.refreshToken(token);
+  }
 }

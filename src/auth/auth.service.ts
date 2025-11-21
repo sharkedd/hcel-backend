@@ -19,26 +19,45 @@ export class AuthService {
   async validateUser(LoginDto: LoginDto) {
     const { email, password: pass } = LoginDto;
     const user = await this.usersService.findByEmail(email);
+
     if (!user)
       throw new RpcException({
         status: 401,
         message: 'Credenciales inválidas',
       });
 
-    const isPasswordValid = await bcrypt.compare(pass, user.password);
-    if (!isPasswordValid)
+    const isValid = await bcrypt.compare(pass, user.password);
+
+    if (!isValid)
       throw new RpcException({
         status: 401,
         message: 'Credenciales inválidas',
       });
 
-    const { password, ...result } = user.toObject();
-    return result;
+    const { password, ...rest } = user.toObject();
+    return rest;
   }
 
-  async login(user: any) {
+  async login(user: User) {
     const payload = { email: user.email, sub: user._id };
-    return { access_token: this.jwtService.sign(payload) };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    };
   }
 
   async validateToken(token: string) {
@@ -65,6 +84,23 @@ export class AuthService {
       throw new RpcException({
         status: 401,
         message: 'Token inválido o expirado',
+      });
+    }
+  }
+
+  async refreshToken(oldRefreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(oldRefreshToken);
+      const newAccessToken = this.jwtService.sign(
+        { email: payload.email, sub: payload.sub },
+        { expiresIn: '15m' },
+      );
+
+      return { accessToken: newAccessToken };
+    } catch (err) {
+      throw new RpcException({
+        status: 401,
+        message: 'Refresh token inválido',
       });
     }
   }
