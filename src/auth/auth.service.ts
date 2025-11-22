@@ -93,7 +93,7 @@ export class AuthService {
       const payload = this.jwtService.verify(oldRefreshToken);
       const newAccessToken = this.jwtService.sign(
         { email: payload.email, sub: payload.sub },
-        { expiresIn: '15m' },
+        { expiresIn: '60m' },
       );
 
       return { accessToken: newAccessToken };
